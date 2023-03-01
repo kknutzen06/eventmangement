@@ -74,9 +74,9 @@ gdknow <-df$v_11
 svrexp <- df$v_99
 role <- df$v_100
 df_sample <-cbind.data.frame(gender,age, country, vrinterest, gdexp, gdknow, svrexp, role)
-describe(df_sample)
-fre(df_sample$country)
-fre(df_sample$role)
+describe(df_sample) # interval scale descriptives
+fre(df_sample$country) # ordinal scale/ frequencies for countr of origin
+fre(df_sample$role) # ordinal scale/ frequencies for role of user
 #######################################################################################
 #                                                                                     #
 #           CALCULATING ALL SCORES OF THE RESPECTIVE QUESTIONNAIRES                   #
@@ -85,13 +85,13 @@ fre(df_sample$role)
 
 ######PRESENCE
 ####reference: http://dx.doi.org/10.1162/105474600566600
-####Instructions: count all occurrences that are6 or bigger and take the mean
+####Instructions: count all occurrences that are 6 or bigger and take the mean
 
-df_sus <- cbind.data.frame(df$v_101, df$v_102, df$v_103, df$v_104, df$v_105, df$v_106, df_sample$role)
-df_sus$big6 <- rowSums(df_sus >= 6)
-fre(df_sus$big6)
-describe(df_sus$big6)
-df$sus <- df_sus$big6
+df_sus <- cbind.data.frame(df$v_101, df$v_102, df$v_103, df$v_104, df$v_105, df$v_106, df_sample$role) # all variables in one  dataframe
+df_sus$big6 <- rowSums(df_sus >= 6)# counting all occurences that are bigger or equal to 6
+fre(df_sus$big6) # frequencies of the counting
+describe(df_sus$big6) # descriptives of the counting
+df$sus <- df_sus$big6 # merging it with the original data frame
 #check reliability
 sus_alpha.sel <- dplyr::select(df_sus,df$v_101, df$v_102, df$v_103, df$v_104, df$v_105, df$v_106)
 sus_alpha <- psych::alpha(sus_alpha.sel)
@@ -160,6 +160,10 @@ df_suass_transtotal$multiply <- df_suass_transtotal$sum * 2.5
 describe(df_suass_transtotal$multiply)
 df$usability <- df_suass_transtotal$multiply
 
+###reliability
+usa_alpha.sel <- dplyr::select(df_suass_transtotal, select = c(df_suass_transtotal$df_susass.trans1:df_susass.trans10))
+usa_alpha <- psych::alpha(spres_alpha.sel, check.keys = TRUE)
+usa_alpha
 
 #plotting usability
 usa <- df%>%
@@ -201,6 +205,11 @@ df_esis_r <-df_esis %>%
                 "rituals" = "v_144",
                 "symbolic" = "v_145",
   )
+##################################################################
+##                                                              ##
+##                        FACTOR ANALYSIS                       ##
+##                                                              ##
+##################################################################
 #factor analysis
 esisr.fa.4 <- factanal(df_esis_r, factors = 4, rotation = "varimax")
 esisr.fa.4
@@ -257,7 +266,7 @@ df$esis.f4 <- factor4.mean
 
 
 plot.sinterac <- data.frame(
-  factor = c(rep("Factor1",29), rep("Factor 2", 29), rep("Factor3", 29), rep ("Factor 4", 29)),
+  factor = c(rep("Contact with trangers",29), rep("Sharing same interests", 29), rep("Known group socialization", 29), rep ("Symbolic events and rituals", 29)),
   value.f =c(df$esis.f1, df$esis.f2, df$esis.f3, df$esis.f4 )
 )
 
@@ -276,7 +285,7 @@ radar_sinterac <- rbind(radar_sinterac,
                         c(mean(df$esis.f1),mean(df$esis.f2),mean(df$esis.f3),mean(df$esis.f4))
                         )
 head(radar_sinterac)
-colnames(radar_sinterac)  = c("Factor 1", "Factor 2","Factor 3", "Factor 4")
+colnames(radar_sinterac)  = c("Contact with strangers", "Sharing same interests","Known group socialization", "Symbolic events and rituals")
 
 head(radar_sinterac)
 typeof(radar_sinterac)
