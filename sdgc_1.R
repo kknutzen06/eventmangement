@@ -75,6 +75,7 @@ svrexp <- df$v_99
 role <- df$v_100
 df_sample <-cbind.data.frame(gender,age, country, vrinterest, gdexp, gdknow, svrexp, role)
 describe(df_sample) # interval scale descriptives
+fre(df_sample$gender)
 fre(df_sample$country) # ordinal scale/ frequencies for countr of origin
 fre(df_sample$role) # ordinal scale/ frequencies for role of user
 #######################################################################################
