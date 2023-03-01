@@ -1,0 +1,336 @@
+######INSTALL AND LOAD PACKAGES
+if(!require(tidyverse)){install.packages('tidyverse')}
+if(!require(readxl)){install.packages('readxl')}
+if(!require(DescTools)){install.packages('DescTools')}
+if(!require(sjPlot)){install.packages('sjPlot')}
+if(!require(magrittr)){install.packages('magrittr')}
+if(!require(rcompanion)){install.packages('rcompanion')}
+if(!require(expss)){install.packages('expss')}
+if(!require(chron)){install.packages('chron')}
+if(!require(emmeans)){install.packages('emmeans')}
+if(!require(car)){install.packages('car')}
+if(!require(gmodels)){install.packages('gmodels')}
+if(!require(Hmisc)){install.packages('Hmisc')}
+if(!require(psych)){install.packages('psych')}
+if(!require(dplyr)){install.packages('dplyr')}
+if(!require(moments)){install.packages('moments')}
+if(!require(ggeasy)){install.packages('ggeasy')}
+if(!require(rstatix)){install.packages('rstatix')}
+if(!require(lsr)){install.packages('lsr')}
+if(!require(ggpubr)){install.packages('ggpubr')}
+if(!require(WRS2)){install.packages('WRS2')}
+if(!require(pgirmess)){install.packages("pgirmess")}
+if(!require(ggcorrplot)){install.packages('ggcorrplot')}
+if(!require(GPArotation)){install.packages('GPArotation')}
+if(!require(ggridges)){install.packages('ggridges')}
+if(!require(fmsb)){install.packages('fmsb')}
+#load packages
+library(ggcorrplot)
+library(lsr)
+library(ggplot2)
+library(ggeasy)
+library(lubridate)
+library(moments)
+library(magrittr)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(DescTools)
+library(car)
+library(gmodels)
+library(reshape)
+library(psych)
+library(expss)
+library(chron)
+library(emmeans)
+library(stringr)
+library(rcompanion)
+library(rstudioapi)
+library(nlme)
+library(matrixStats)
+library(lme4)
+library(ggpubr)
+library(rstatix)
+library(Hmisc)
+library(GPArotation)
+library(hrbrthemes)
+library(ggridges)
+#########WORKING DIRECTORY AND DATASET EDIT#######################################
+dirpath <- rstudioapi::getActiveDocumentContext()
+setwd(dirname(dirpath$path))
+wd <- getwd()
+options(scipen=999)
+df<- read_csv2("sdgc.csv", col_names = TRUE,
+               na = "-77")
+set.seed(1)
+############################SAMPLE DESCRIPTION#################
+gender <- df$v_2
+age <- df$v_3
+country <- df$v_6
+vrinterest <- df$v_9
+gdexp <- df$v_10
+gdknow <-df$v_11
+svrexp <- df$v_99
+role <- df$v_100
+df_sample <-cbind.data.frame(gender,age, country, vrinterest, gdexp, gdknow, svrexp, role)
+describe(df_sample)
+fre(df_sample$country)
+fre(df_sample$role)
+#######################################################################################
+#                                                                                     #
+#           CALCULATING ALL SCORES OF THE RESPECTIVE QUESTIONNAIRES                   #
+#                                                                                     #
+#######################################################################################
+
+######PRESENCE
+####reference: http://dx.doi.org/10.1162/105474600566600
+####Instructions: count all occurrences that are6 or bigger and take the mean
+
+df_sus <- cbind.data.frame(df$v_101, df$v_102, df$v_103, df$v_104, df$v_105, df$v_106, df_sample$role)
+df_sus$big6 <- rowSums(df_sus >= 6)
+fre(df_sus$big6)
+describe(df_sus$big6)
+df$sus <- df_sus$big6
+#check reliability
+sus_alpha.sel <- dplyr::select(df_sus,df$v_101, df$v_102, df$v_103, df$v_104, df$v_105, df$v_106)
+sus_alpha <- psych::alpha(sus_alpha.sel)
+sus_alpha
+
+
+########################social presence
+df_socialpresence <- cbind.data.frame(subset(df, select = c(v_108: v_121))) # dataframe
+df_socialpresence$v_116 <- car::recode(df_socialpresence$v_116, "1=5; 2=4;3=3;4=2;5=1") # reverse code items
+df_socialpresence$v_117 <- car::recode(df_socialpresence$v_117, "1=5; 2=4;3=3;4=2;5=1")
+df_socialpresence$v_118 <- car::recode(df_socialpresence$v_118, "1=5; 2=4;3=3;4=2;5=1")
+df_socialpresence$mean <- rowMeans(df_socialpresence)# calculate mean
+describe(df_socialpresence$mean) # mean results
+df$spres_mean <- df_socialpresence$mean
+###reliability
+spres_alpha.sel <- dplyr::select(df_socialpresence, select = c(v_108:v_121))
+spres_alpha <- psych::alpha(spres_alpha.sel)
+spres_alpha
+####plotting presence scale###############
+plot.pres <- data.frame(
+  type = c( rep("social Presence",29), rep("Presence", 29)),
+  value = c( df_socialpresence$mean, df_sus$big6))
+p <- plot.pres %>%
+  ggplot( aes(x=value, fill=type)) +
+  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_ipsum() +
+  labs(fill="")
+p
+##USABILITY score
+#https://www.researchgate.net/publication/228593520_SUS_A_quick_and_dirty_usability_scale
+df_susass <- cbind.data.frame(subset(df, select = c(v_122:v_131))) # select the 10 variables that belong to the sus
+##USABILITY score
+#https://www.researchgate.net/publication/228593520_SUS_A_quick_and_dirty_usability_scale
+df_susass <- cbind.data.frame(subset(df, select = c(v_122:v_131))) # select the 10 variables that belong to the sus
+for (i in df_susass){ # copy the items 1,3,5,7,9  to a new data frame to subtract them collectively
+  df_susass.trans1 <- df_susass$v_122
+  df_susass.trans3 <- df_susass$v_124
+  df_susass.trans5 <- df_susass$v_126
+  df_susass.trans7 <- df_susass$v_128
+  df_susass.trans9 <- df_susass$v_130
+  i = i+1
+}
+#new dataframe with 1. part of transformed values for the final score
+df_susass.trans_1 <- cbind.data.frame(df_susass.trans1, df_susass.trans3, df_susass.trans5, df_susass.trans7, df_susass.trans9)
+#now substract 1
+df_susass.trans_1 <- df_susass.trans_1-1
+for (i in df_susass){# same here but 5- the score for items 2,4,6,8,10
+  df_susass.trans2 <- df_susass$v_123
+  df_susass.trans4 <- df_susass$v_125
+  df_susass.trans6 <- df_susass$v_127
+  df_susass.trans8 <- df_susass$v_129
+  df_susass.trans10 <- df_susass$v_131
+  i = i+1
+}
+#new dataframe
+df_susass.trans_2 <- cbind.data.frame(df_susass.trans2, df_susass.trans4, df_susass.trans6, df_susass.trans8, df_susass.trans10)
+#subtract 5- score
+df_susass.trans_2  <- 5-df_susass.trans_2
+#put both parts together
+df_suass_transtotal <- cbind.data.frame(df_susass.trans_1, df_susass.trans_2)
+#sum the score
+df_suass_transtotal$sum <- rowSums(df_suass_transtotal)
+#multiply the fscore by 2,5 for the final score
+df_suass_transtotal$multiply <- df_suass_transtotal$sum * 2.5
+describe(df_suass_transtotal$multiply)
+df$usability <- df_suass_transtotal$multiply
+
+
+#plotting usability
+usa <- df%>%
+  ggplot( aes(x=usability)) +
+  geom_histogram( binwidth=15, fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+  ggtitle("Usability") +
+  theme_ipsum() +
+  theme(
+    plot.title = element_text(size=15)
+  )
+usa
+
+####social interaction
+df_esis <- cbind.data.frame(subset(df, select = c(v_132:v_145)))
+df_esis$v_143
+df_esis$v_137 <- car::recode(df_esis$v_137, "1=5; 2=4;3=3;4=2;5=1")
+df_esis$v_143 <- car::recode(df_esis$v_143, "1=5; 2=4;3=3;4=2;5=1")
+df_esis$v_143
+#reliability
+esis_alpha.sel <- dplyr::select(df_esis, select = c(v_132:v_145))
+esis_alpha <- psych::alpha(esis_alpha.sel)
+esis_alpha
+esis.mean <- rowMeans(df_esis)
+describe(esis.mean)
+df$esis.mean <- esis.mean
+df_esis_r <-df_esis %>%
+  dplyr::rename("newacquaintances" = "v_132",
+                "enjoynewppl" = "v_133",
+                "dothingswstrangers" = "v_134",
+                "sharedinterests" = "v_135",
+                "truststranger" = "v_136",
+                "avoidstranger" = "v_137",
+                "sensebelonging" = "v_138",
+                "help" = "v_139",
+                "partgroup" = "v_140",
+                "sharedinfogroup" = "v_141",
+                "groupcode" = "v_142",
+                "talkgroup" = "v_143",
+                "rituals" = "v_144",
+                "symbolic" = "v_145",
+  )
+#factor analysis
+esisr.fa.4 <- factanal(df_esis_r, factors = 4, rotation = "varimax")
+esisr.fa.4
+esisr.fa.3 <- factanal(df_esis_r, factors = 3, rotation = "varimax")
+esisr.fa.3
+faktorplots <-plot(eigen(cor(df_esis_r))$values, type = "b")
+dev.off()
+df_esis_r.pa.promax <- principal(df_esis_r,
+                                 nfactors=4,
+                                 rotate="varimax"
+)
+print(df_esis_r.pa.promax)
+#factor 1
+factor1.m <- as.matrix(subset(df_esis_r, select = c(newacquaintances, enjoynewppl, dothingswstrangers, sharedinterests)))
+factor1.c <- rcorr(factor1.m,type = "spearman")
+factor1.c
+factor1.c$P
+factor1_alpha <- psych::alpha(factor1.m)
+factor1_alpha
+factor1.mean <- rowMeans(factor1.m)
+describe(factor1.mean)
+df$esis.f1 <- factor1.mean
+#factor 2
+factor2.m <- as.matrix(subset(df_esis_r, select = c(truststranger, help, sharedinfogroup, groupcode)))
+factor2.c <- rcorr(factor2.m,type = "spearman")
+factor2.c
+factor2.c$P
+factor2_alpha <- psych::alpha(factor2.m)
+factor2_alpha
+factor2.mean <- rowMeans(factor2.m)
+describe(factor2.mean)
+df$esis.f2 <- factor2.mean
+#factor 3
+factor3.m <- as.matrix(subset(df_esis_r, select = c(avoidstranger, enjoynewppl, help, newacquaintances, talkgroup)))
+factor3.c <- rcorr(factor3.m,type = "spearman")
+factor3.c
+factor3.c$P
+factor3_alpha <- psych::alpha(factor3.m)
+factor3_alpha
+factor3.mean <- rowMeans(factor3.m)
+describe(factor3.mean)
+df$esis.f3 <- factor3.mean
+#factor 4
+factor4.m <- as.matrix(subset(df_esis_r, select = c(rituals, symbolic,partgroup)))
+factor4.c <- rcorr(factor4.m,type = "spearman")
+factor4.c
+factor4.c$P
+factor4_alpha <- psych::alpha(factor4.m)
+factor4_alpha
+factor4.mean <- rowMeans(factor4.m)
+describe(factor4.mean)
+factor4.mean
+df$esis.f4 <- factor4.mean
+
+
+plot.sinterac <- data.frame(
+  factor = c(rep("Factor1",29), rep("Factor 2", 29), rep("Factor3", 29), rep ("Factor 4", 29)),
+  value.f =c(df$esis.f1, df$esis.f2, df$esis.f3, df$esis.f4 )
+)
+
+esisplott <- ggplot(plot.sinterac, aes(x = value.f, y = factor, fill = factor)) +
+  geom_density_ridges() +
+  theme_ridges() + 
+  theme(legend.position = "none")
+esisplott
+
+library(fmsb)
+radar_sinterac <- data.frame(matrix(c(max(df$esis.f1), max(df$esis.f2), max(df$esis.f3), max(df$esis.f4)), ncol = 4))
+                             
+                             
+radar_sinterac <- rbind(radar_sinterac, 
+                        c(min(round(df$esis.f1)), min(round(df$esis.f2)), min(round(df$esis.f3)), min(round(df$esis.f4))),
+                        c(mean(df$esis.f1),mean(df$esis.f2),mean(df$esis.f3),mean(df$esis.f4))
+                        )
+head(radar_sinterac)
+colnames(radar_sinterac)  = c("Factor 1", "Factor 2","Factor 3", "Factor 4")
+
+head(radar_sinterac)
+typeof(radar_sinterac)
+radar_sinterac <- data.frame(radar_sinterac)
+typeof(radar_sinterac)
+
+radarchart(radar_sinterac,cglty = 4, axistype = 1, plty = 1, plwd = 4)
+
+####################################################
+df_sec7 <- cbind.data.frame(df$v_156,df$v_160, df$v_161, df$v_147, df$v_146)
+fre(df$v_154)
+describe(df_sec7)
+#######################################################
+###technical difficulties -> usability
+usa_tech.df <-cbind.data.frame(df_sec7$`df$v_147`,df_sec7$`df$v_146`, df_suass_transtotal$multiply)
+usa_tech.m <- as.matrix(usa_tech.df)
+pairs(usa_tech.m)  ##create scatterplots for linearity assumption inspecting
+usa_tech.cor <- rcorr(usa_tech.m, type = "spearman")
+usa_tech.cor$r
+usa_tech.cor$P
+
+usa_tech_plot<- ggcorrplot(usa_tech.cor$r, hc.order = TRUE, type = "lower", lab = TRUE, p.mat = usa_tech.cor$P, insig = "blank", colors = c("#de2c00", "white", "#04d40f"), title = "Technical difficulties in Correlation to Usability")
+usa_tech_plot
+
+dev.off()
+###################################
+####social presence - social interaction - presence
+spres_sinterac <- cbind.data.frame(df$spres_mean, df$esis.mean, df$sus )
+spres_sinterac.m <- as.matrix(spres_sinterac)
+pairs(spres_sinterac.m)
+
+spres_sinterac.cor <- rcorr(spres_sinterac.m, type = "spearman")
+spres_sinterac.cor$r
+spres_sinterac.cor$P
+
+spres_sinterac_plot<- ggcorrplot(spres_sinterac.cor$r, hc.order = TRUE, type = "lower", lab = TRUE, p.mat = spres_sinterac$P, insig = "blank", colors = c("#de2c00", "white", "#04d40f"), title = "(Social) Presence - Social Interaction - Usability - Presence")
+spres_sinterac_plot
+
+###factors of social interaction - social presence
+f_spres_sinterac <- cbind.data.frame(df$spres_mean, df$esis.f1,df$esis.f2, df$esis.f3, df$esis.f4)
+f_spres_sinterac.m <- as.matrix(f_spres_sinterac)
+pairs(f_spres_sinterac.m)
+
+f_spres_sinterac.cor <- rcorr(f_spres_sinterac.m, type = "spearman")
+f_spres_sinterac.cor$r
+f_spres_sinterac.cor$P
+
+f_spres_sinterac_plot<- ggcorrplot(f_spres_sinterac.cor$r, hc.order = TRUE, type = "lower", lab = TRUE, p.mat = f_spres_sinterac$P, insig = "blank", colors = c("#de2c00", "white", "#04d40f"), title = "Social Presence - Social Interaction Factors ")
+f_spres_sinterac_plot
+
+
+############################
+##SPLITTING BY EXPERIENCE
+############################
+newbie <- subset(df$v_11, df$v_11<=3)
+newbie.df <- as.data.frame(newbie)
+fre(df$v_11)
