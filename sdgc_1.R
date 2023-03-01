@@ -189,6 +189,18 @@ esis_alpha
 esis.mean <- rowMeans(df_esis)
 describe(esis.mean)
 df$esis.mean <- esis.mean
+####plotting esis
+
+esis.plot <- df%>%
+  ggplot( aes(x=esis.mean)) +
+  geom_histogram( binwidth=0.5, fill="#900562", color="#e9ecef", alpha=0.9) +
+  ggtitle("Social Interaction") +
+  theme_ipsum() +
+  theme(
+    plot.title = element_text(size=15)
+  )
+esis.plot
+
 df_esis_r <-df_esis %>%
   dplyr::rename("newacquaintances" = "v_132",
                 "enjoynewppl" = "v_133",
