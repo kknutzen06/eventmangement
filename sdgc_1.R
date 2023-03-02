@@ -402,12 +402,169 @@ f_spres_sinterac.cor
 ##          SPLITTING BY EXPERIENCE  (WIP)                  ##
 ##                                                          ##
 ##############################################################
-newbie <- subset(df$v_11, df$v_11<=3)
+newbie <- subset(df, df$v_11<=3)
 newbie.df <- as.data.frame(newbie)
-fre(newbie.df)
 newbie.df$group <- 1
-experienced <- subset(df$v_11, df$v_11>3)
-experienced.df <- as.data.frame(experienced)
-fre(experienced.df)
 
+experienced <- subset(df, df$v_11>3)
+experienced.df <- as.data.frame(experienced)
+experienced.df$group <- 2
+df_split <- rbind(newbie.df, experienced.df)
+
+###sample description
+gender <- df$v_2
+age <- df$v_3
+country <- df$v_6
+vrinterest <- df$v_9
+gdexp <- df$v_10
+gdknow <-df$v_11
+svrexp <- df$v_99
+role <- df$v_100
+describeBy(df_split$v_2, group = df_split$group)#age
+describeBy(df_split$v_9, group = df_split$group)#vrinterest
+describeBy(df_split$v_2, group = df_split$group)#age
+
+describeBy(df_split$v_10, group = df_split$group)#gd experience
+describeBy(df_split$v_11, group = df_split$group)#gd knowledge
+describeBy(df_split$v_99, group = df_split$group)#social vr experience
+
+df_split %>%# count country of origin per group
+  group_by(group, v_6) %>%
+  dplyr::summarize(count = n())
+
+df_split %>% # count role per group
+  group_by(group, v_100) %>%
+  dplyr::summarize(count = n())
+
+df_split %>% # count gender per group
+  group_by(group, v_2) %>%
+  dplyr::summarize(count = n())
+##dependent variables
+describeBy(df_split$spres_mean, group = df_split$group)#social presence
+describeBy(df_split$sus, group = df_split$group)#presence
+describeBy(df_split$esis.mean, group = df_split$group)#social interaction
+describeBy(df_split$esis.f1, group = df_split$group)#social interaction, factor 1, contact to strangers
+describeBy(df_split$esis.f2, group = df_split$group)# social interaction, factor 2, sharing interests
+describeBy(df_split$esis.f3, group = df_split$group) # social interaction, factor 3, knowngroup socialization
+describeBy(df_split$esis.f4, group = df_split$group)# social interaction, factor 4, events and rituals
+describeBy(df_split$usability, group = df_split$group)#usability
+
+#####################################functions for normality testing
+qqnormPlot <- function(variableQQ)
+{
+  result <- qqnorm(variableQQ, main = deparse(substitute(variableQQ)))
+}
+
+qqlinePlot <- function(variableQQ)
+{
+  result <- qqline(variableQQ, main = deparse(substitute(variableQQ)))
+}
+
+histPlot <- function(variableHist)
+{
+  
+  result <- hist(variableHist)
+}
+
+boxPlotND <- function(variableBox)
+{
+  result <- boxplot(variableBox, main = deparse(substitute(variableBox)))
+}
+
+outliers <- function(variableOut)
+{
+  out_variable <- boxplot(variableOut, plot = FALSE) $out
+  outliersIndex <- which (variableOut %in% out_variable)
+  return(outliersIndex)
+}
+
+shapiroFunction <- function(variableShapiro)
+{
+  shapiroResult <- shapiro.test(variableShapiro)
+  return(shapiroResult)
+}
+
+
+
+normal_distribution.ttest <- function(dataValidVariable, dataGroup1Variable, dataGroup2variable, dataframe, name)
+{
+  #Show descriptives
+  descriptive_overall <- describe(dataValidVariable, IQR = TRUE, quant = c(.25, .75)) ##whole sample
+  descriptive_pergroup <- describeBy(dataValidVariable, group = df_split$group, IQR = TRUE, quant = c(.25, .75)) ##per group
+  variableName = toString(name) ##get name of variable for plots
+  
+  #set up layout for plots for observed data
+  par(mar=c(2.5,2.5,1,1))
+  layout(matrix(c(1,2,3,4,1,5,3,6),ncol=2),heights=c(1,3,1,3))
+  plot.new()
+  text(0.5,0.5,labels = paste(name , " Group Cues"),cex=2,font=2)
+  
+  #QQPlots of observed data
+  qqnormPlot(dataGroup1Variable)
+  qqlinePlot(dataGroup1Variable)
+  
+  plot.new()
+  text(0.5,0.5,labels = paste(name , " Without Group Cues"),cex=2,font=2)
+  qqnormPlot(dataGroup2variable)
+  qqlinePlot(dataGroup2variable)
+  
+  #histograms of observed data
+  histPlot(dataGroup1Variable)
+  histPlot(dataGroup2variable)
+  
+  #skewness and kurtosis of observed data
+  kurtosisGroup <- kurtosis(dataGroup1Variable)
+  skewnessGroup <- skewness(dataGroup1Variable)
+  kurtosisGroup2 <- kurtosis(dataGroup2variable)
+  skewnessGroup2 <- skewness(dataGroup2variable)
+  
+  #boxplots
+  par(mfrow=c(1,2))
+  boxPlotND(dataGroup1Variable)
+  boxPlotND(dataGroup2variable)
+  
+  #outliers
+  outliers_group <- outliers(dataGroup1Variable)
+  outliers_wo <- outliers(dataGroup2variable)
+  
+  #Shapiro-Wilk test for observed data
+  shapiroGroup <- shapiroFunction(dataGroup1Variable)
+  shapiroGroup2 <- shapiroFunction(dataGroup2variable)
+  
+  ##Levene's test
+  dataframe$group <- as.factor(dataframe$group)
+  levene <- leveneTest(dataValidVariable, group = dataframe$group)
+  
+  ###print plots and results
+  returnList <- list("Name" = name, "Descriptives Overall" = descriptive_overall, "Descriptives Per Group" = descriptive_pergroup,
+                     "Kurtosis Group Cues" = kurtosisGroup, "Skewness Group 1" = skewnessGroup,
+                     "Kurtosis Group2" = kurtosisGroup2, "Skewness Group 2" = skewnessGroup2,
+                     "Outliers Group 1" = outliers_group, "Outliers Group 2" = outliers_wo,
+                     "Shapiro-Wilk-Test Group 1" = shapiroGroup, "Shapiro-Wilk-Test Group 2" = shapiroGroup2,
+                     "Levene" = levene)
+  return (returnList)
+}
+normal_distribution.ttest(df_split$spres_mean,newbie.df$spres_mean, experienced.df$spres_mean, df_split, "Social Presence")
+
+normal_distribution.ttest(df_split$sus,newbie.df$sus, experienced.df$sus, df_split, "Presence")
+
+normal_distribution.ttest(df_split$esis.mean,newbie.df$esis.mean, experienced.df$esis.mean, df_split, "Social Interaction")
+##social inteaction mean is normally distributed
+normal_distribution.ttest(df_split$esis.f1,newbie.df$esis.f1, experienced.df$esis.f1, df_split, "Social Interaction (Factor 1)")
+normal_distribution.ttest(df_split$esis.f2,newbie.df$esis.f2, experienced.df$esis.f2, df_split, "Social Interaction (Factor 2)")
+normal_distribution.ttest(df_split$esis.f3,newbie.df$esis.f3, experienced.df$esis.f3, df_split, "Social Interaction (Factor 3)")
+normal_distribution.ttest(df_split$esis.f4,newbie.df$esis.f4, experienced.df$esis.f4, df_split, "Social Interaction (Factor 4)")
+# factor 4 is normally distributed
+normal_distribution.ttest(df_split$usability,newbie.df$usability, experienced.df$usability, df_split, "Usability")
+#usability is normally distributed
+
+t.test(df_split$esis.mean ~ df_split$group, na.action = na.exclude, alternative = "two.sided")#social interaction
+t.test(df_split$esis.f4 ~ df_split$group, na.action = na.exclude, alternative = "two.sided") # factor 4
+t.test(df_split$usability ~ df_split$group, na.action = na.exclude, alternative = "two.sided")# usability
+wilcox.test(df_split$sus ~ df_split$group, exact = FALSE, na.action = na.exclude, alternative = "two.sided") # presence
+wilcox.test(df_split$spres_mean ~ df_split$group, exact = FALSE, na.action = na.exclude, alternative = "two.sided") # social presence
+wilcox.test(df_split$sus ~ df_split$group, exact = FALSE, na.action = na.exclude, alternative = "two.sided")
+wilcox.test(df_split$esis.f1 ~ df_split$group, exact = FALSE, na.action = na.exclude, alternative = "two.sided")
+wilcox.test(df_split$esis.f2 ~ df_split$group, exact = FALSE, na.action = na.exclude, alternative = "two.sided")
+wilcox.test(df_split$esis.f3 ~ df_split$group, exact = FALSE, na.action = na.exclude, alternative = "two.sided")
 
