@@ -80,6 +80,8 @@ svrexp <- df$v_99
 role <- df$v_100
 df_sample <-cbind.data.frame(gender,age, country, vrinterest, gdexp, gdknow, svrexp, role)
 describe(df_sample) # interval scale descriptives
+fre(df_sample$gdexp) # frequencies of filter question
+fre(df_sample$gdknow)
 fre(df_sample$gender)
 fre(df_sample$country) # ordinal scale/ frequencies for countr of origin
 fre(df_sample$role) # ordinal scale/ frequencies for role of user
@@ -98,6 +100,7 @@ df_sus$big6 <- rowSums(df_sus >= 6)# counting all occurences that are bigger or 
 fre(df_sus$big6) # frequencies of the counting
 describe(df_sus$big6) # descriptives of the counting
 df$sus <- df_sus$big6 # merging it with the original data frame
+fre(df_sus$big6)
 #check reliability
 sus_alpha.sel <- dplyr::select(df_sus,df$v_101, df$v_102, df$v_103, df$v_104, df$v_105, df$v_106)
 sus_alpha <- psych::alpha(sus_alpha.sel)
@@ -329,6 +332,7 @@ esisplott
 
 ##plotting a radar chart
 library(fmsb)
+describe(df$esis.f1)
 radar_sinterac <- data.frame(matrix(c(max(df$esis.f1), max(df$esis.f2), max(df$esis.f3), max(df$esis.f4)), ncol = 4))
                              
                              
@@ -345,9 +349,35 @@ radar_sinterac <- data.frame(radar_sinterac)
 typeof(radar_sinterac)
 
 radarchart(radar_sinterac,seg = 6,  axistype = 1, plty = 1,pcol = 3,  plwd = 5,cglcol = 1,vlcex = 0.75,  caxislabels = c(1,2,3,4,5,6,7), axislabcol = "black")
+
+# 2nd radar chart with single items
+##plotting a radar chart
+library(fmsb)
+radar_sinterac2 <- data.frame(matrix(c(max(df$v_132), max(df$v_141), max(df$v_139), max(df$v_142), max(df$v_132), max(df$v_136), max(df$v_135, max(df$v_133), max(df$v_138), max(df$v_140), max(df$v_143), max(df$v_137), max(df$v_144), max(df$v_145))), ncol = 14))
+
+min <- c(min(round(df$v_132)), min(round(df$v_141)), min(round(df$v_139)), min(round(df$v_142)), min(round(df$v_132)), min(round(df$v_136)), min(round(df$v_135)), min(round(df$v_133)), min(round(df$v_138)),min(round(df$v_140)), min(round(df$v_143)), min(round(df$v_137)), min(round(df$v_144)), min(round(df$v_145)))
+
+
+mean <- c(mean(df$v_132), mean(df$v_141), mean(df$v_139), mean(df$v_142), mean(df$v_132), mean(df$v_136), mean(df$v_135), mean(df$v_133), mean(df$v_138), mean(df$v_140),mean(df$v_143), mean(df$v_137), mean(df$v_144), mean(df$v_145))
+min
+mean
+radar_sinterac2
+radar_sinterac2 <- rbind(radar_sinterac2, min, mean)
+                        
+
+                        
+head(radar_sinterac2,)
+colnames(radar_sinterac2)  = c("I made new acquaintances", "I shared information with people in my group","I helped anybody who needed", "I followed my group's code of behvaiour", "I did things togther with strangers", "I felt I could trust strangers at the event", "We shared the same interests", "I enjoyed meeting new people","I felt a sense of belonging", "I felt part of a larger group", "Not talking only with known-group", "Not avoiding contact with strangers", "Group's rituals at the event", "Event as a symbolic meeting moment")
+
+head(radar_sinterac2)
+typeof(radar_sinterac2)
+radar_sinterac <- data.frame(radar_sinterac2)
+typeof(radar_sinterac2)
+
+radarchart(radar_sinterac2,seg = 6,  axistype = 1, plty = 6,pcol = 2,  plwd = 3, cglcol = 1,vlcex = 0.75,  caxislabels = c(1,2,3,4,5,6,7), axislabcol = "black")
 ################################################################################################
 ##                                                                                            ##
-#######                     EXPLORATORY QUESTIONS WRT TECHNICAL ISSUES                        ##
+##                        EXPLORATORY QUESTIONS WRT TECHNICAL ISSUES                          ##
 ##                                                                                            ##
 ################################################################################################
 #descriptives
@@ -361,6 +391,7 @@ describe(df_sec7) # descriptives
 ######################################################
 
 ###technical difficulties -> usability, are technical issues related to their experienced usability of the platform?
+
 usa_tech.df <-cbind.data.frame(df_sec7$`df$v_147`,df_sec7$`df$v_146`, df_suass_transtotal$multiply)# put all variables in one data frame
 usa_tech.m <- as.matrix(usa_tech.df) # transform in a matrix
 pairs(usa_tech.m)  ##create scatterplots for linearity assumption inspecting to check if we can use pearson or spearman correlation
@@ -399,27 +430,21 @@ f_spres_sinterac_plot
 f_spres_sinterac.cor
 ##############################################################
 ##                                                          ##
-##          SPLITTING BY EXPERIENCE  (WIP)                  ##
+##          SPLITTING BY KNOWLEDGE  (WIP)                   ##
 ##                                                          ##
 ##############################################################
-newbie <- subset(df, df$v_11<=3)
+fre(df$v_10)
+newbie <- subset(df, df$v_10< 2)
 newbie.df <- as.data.frame(newbie)
 newbie.df$group <- 1
 
-experienced <- subset(df, df$v_11>3)
+experienced <- subset(df, df$v_10 >1)
 experienced.df <- as.data.frame(experienced)
 experienced.df$group <- 2
 df_split <- rbind(newbie.df, experienced.df)
 
 ###sample description
-gender <- df$v_2
-age <- df$v_3
-country <- df$v_6
-vrinterest <- df$v_9
-gdexp <- df$v_10
-gdknow <-df$v_11
-svrexp <- df$v_99
-role <- df$v_100
+
 describeBy(df_split$v_2, group = df_split$group)#age
 describeBy(df_split$v_9, group = df_split$group)#vrinterest
 describeBy(df_split$v_2, group = df_split$group)#age
