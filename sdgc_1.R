@@ -353,13 +353,14 @@ radarchart(radar_sinterac,seg = 6,  axistype = 1, plty = 1,pcol = 3,  plwd = 5,c
 # 2nd radar chart with single items
 ##plotting a radar chart
 library(fmsb)
-radar_sinterac2 <- data.frame(matrix(c(max(df$v_132), max(df$v_141), max(df$v_139), max(df$v_142), max(df$v_132), max(df$v_136), max(df$v_135, max(df$v_133), max(df$v_138), max(df$v_140), max(df$v_143), max(df$v_137), max(df$v_144), max(df$v_145))), ncol = 14))
+radar_sinterac2 <- data.frame(matrix(c(max(df$v_132), max(df$v_144), max(df$v_143), max(df$v_137), max(df$v_143), max(df$v_140), max(df$v_138, max(df$v_133), max(df$v_138), max(df$v_136), max(df$v_132), max(df$v_142), max(df$v_139), max(df$v_141))), ncol = 14))
 
-min <- c(min(round(df$v_132)), min(round(df$v_141)), min(round(df$v_139)), min(round(df$v_142)), min(round(df$v_132)), min(round(df$v_136)), min(round(df$v_135)), min(round(df$v_133)), min(round(df$v_138)),min(round(df$v_140)), min(round(df$v_143)), min(round(df$v_137)), min(round(df$v_144)), min(round(df$v_145)))
+mean <- c(mean(df$v_132), mean(df$v_144), mean(df$v_143), mean(df$v_137), mean(df$v_143), mean(df$v_140), mean(df$v_138), mean(df$v_133), mean(df$v_138), mean(df$v_136), mean(df$v_132), mean(df$v_142), mean(df$v_139), mean(df$v_141))
 
 
-mean <- c(mean(df$v_132), mean(df$v_141), mean(df$v_139), mean(df$v_142), mean(df$v_132), mean(df$v_136), mean(df$v_135), mean(df$v_133), mean(df$v_138), mean(df$v_140),mean(df$v_143), mean(df$v_137), mean(df$v_144), mean(df$v_145))
-min
+
+min <- c(min(round(df$v_132)), min(round(df$v_144)), min(round(df$v_143)), min(round(df$v_137)), min(round(df$v_143)), min(round(df$v_140)), min(round(df$v_138)), min(round(df$v_133)), min(round(df$v_138)), min(round(df$v_136)), min(round(df$v_132)), min(round(df$v_142)), min(round(df$v_139)), min(round(df$v_141)))
+
 mean
 radar_sinterac2
 radar_sinterac2 <- rbind(radar_sinterac2, min, mean)
@@ -367,7 +368,7 @@ radar_sinterac2 <- rbind(radar_sinterac2, min, mean)
 
                         
 head(radar_sinterac2,)
-colnames(radar_sinterac2)  = c("I made new acquaintances", "I shared information with people in my group","I helped anybody who needed", "I followed my group's code of behvaiour", "I did things togther with strangers", "I felt I could trust strangers at the event", "We shared the same interests", "I enjoyed meeting new people","I felt a sense of belonging", "I felt part of a larger group", "Not talking only with known-group", "Not avoiding contact with strangers", "Group's rituals at the event", "Event as a symbolic meeting moment")
+colnames(radar_sinterac2)  = c("I made new acquaintances", "Event as a symbolic meeting moment","Group's rituals at the event", "Not avoiding contact with strangers", "Not talking only with known-group ", "I felt part of a larger group", "I felt a sense of belonging", "I enjoyed meeting new people","We shared the same interests", "I felt I could trust strangers at the event", "I did things together with strangers", "I followed my group's code of behaviour", "I helped anybody who needed", "I shared information with people in my group")
 
 head(radar_sinterac2)
 typeof(radar_sinterac2)
